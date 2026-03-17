@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Attendance - Face Attendance System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-dark sticky-top">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">
+                <i class="fas fa-face-smile"></i> Face Attendance System
+            </span>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="container my-5">
+        <div class="row mb-5">
+            <div class="col-12">
+                <h2 class="text-center">Attendance Records</h2>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-10 mx-auto">
+                <!-- Stats Cards -->
+                {% if data %}
+                <div class="row g-3 mb-4">
+                    <div class="col-md-3">
+                        <div class="info-card">
+                            <h3 class="text-primary"><i class="fas fa-users"></i></h3>
+                            <h4>{{ data|length }}</h4>
+                            <p class="text-muted mb-0">Total Records</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="info-card">
+                            <h3 class="text-success"><i class="fas fa-check-circle"></i></h3>
+                            <h4 id="uniqueCount">0</h4>
+                            <p class="text-muted mb-0">Unique Students</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="info-card">
+                            <h3 class="text-info"><i class="fas fa-calendar-day"></i></h3>
+                            <h4 id="todayCount">0</h4>
+                            <p class="text-muted mb-0">Today's Attendance</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="info-card">
+                            <h3 class="text-warning"><i class="fas fa-database"></i></h3>
+                            <h4 id="lastDate">--</h4>
+                            <p class="text-muted mb-0">Last Updated</p>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Records Card -->
+                <div class="card shadow-sm">
+                    <div class="card-header">
+                        <div class="row align-items-center">
+                            <div class="col">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-list"></i> All Records
+                                </h5>
+                            </div>
+                            <div class="col-auto">
+                                <button class="btn btn-sm btn-light" onclick="exportToCSV()">
+                                    <i class="fas fa-download"></i> Export
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        {% if data %}
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0" id="attendanceTable">
+                                <thead class="table-light sticky-top">
+                                    <tr>
+                                        <th style="width: 40px;">
+                                            <i class="fas fa-hashtag"></i>
+                                        </th>
+                                        <th>
+                                            <i class="fas fa-user"></i> Name
+                                        </th>
+                                        <th>
+                                            <i class="fas fa-clock"></i> Date & Time
+                                        </th>
+                                        <th style="width: 50px;">
+                                            <i class="fas fa-cogs"></i>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% set counter = [] %}
+                                    {% for record in data %}
+                                        {% if counter.append(1) %}{% endif %}
+                                    <tr>
+                                        <td class="text-muted">{{ counter|length }}</td>
+                                        <td>
+                                            <strong>{{ record.name }}</strong>
+                                        </td>
+                                        <td>
+                                            <i class="fas fa-calendar"></i> 
+                                            <span class="record-time">{{ record.timestamp }}</span>
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-danger" onclick="deleteRecord(this)">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="alert alert-info m-3" role="alert">
+                            <h5 class="alert-heading">
+                                <i class="fas fa-inbox"></i> No Records Yet
+                            </h5>
+                            <p class="mb-0">No attendance records found. Start taking attendance to create records.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="card-footer bg-light">
+                        <a href="/" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Home
+                        </a>
+                        {% if data %}
+                        <button class="btn btn-danger float-end" onclick="clearAllRecords()">
+                            <i class="fas fa-trash"></i> Clear All
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="text-white text-center py-4 mt-5">
+        <p class="mb-0">&copy; 2026 Face Attendance System</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    
+    <script>
+        // Calculate statistics
+        function calculateStats() {
+            const table = document.getElementById('attendanceTable');
+            if (!table) return;
+            
+            const rows = table.querySelectorAll('tbody tr');
+            const names = new Set();
+            let todayCount = 0;
+            let lastDate = '--';
+            
+            rows.forEach(row => {
+                const name = row.cells[1].textContent.trim();
+                const dateTime = row.cells[2].textContent;
+                
+                names.add(name);
+                
+                // Check if record is from today
+                const recordDate = new Date(dateTime);
+                const today = new Date();
+                if (recordDate.toDateString() === today.toDateString()) {
+                    todayCount++;
+                }
+                
+                // Update last date
+                if (lastDate === '--' || new Date(dateTime) > new Date(lastDate)) {
+                    lastDate = dateTime.substring(0, 10);
+                }
+            });
+            
+            document.getElementById('uniqueCount').textContent = names.size;
+            document.getElementById('todayCount').textContent = todayCount;
+            document.getElementById('lastDate').textContent = lastDate;
+        }
+
+        // Export to CSV
+        function exportToCSV() {
+            const table = document.getElementById('attendanceTable');
+            if (!table) {
+                alert('No data to export');
+                return;
+            }
+            
+            let csv = 'Name,Date & Time\n';
+            const rows = table.querySelectorAll('tbody tr');
+            
+            rows.forEach(row => {
+                const name = row.cells[1].textContent.trim();
+                const dateTime = row.cells[2].textContent.trim();
+                csv += `"${name}","${dateTime}"\n`;
+            });
+            
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `attendance_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+        }
+
+        // Delete record (UI only, needs backend support)
+        function deleteRecord(button) {
+            if (confirm('Are you sure you want to delete this record?')) {
+                button.closest('tr').remove();
+                calculateStats();
+            }
+        }
+
+        // Clear all records
+        function clearAllRecords() {
+            if (confirm('This will delete all attendance records. Are you sure?')) {
+                alert('Clear functionality requires backend implementation');
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            calculateStats();
+        });
+    </script>
+</body>
+</html>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

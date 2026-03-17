@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Train Model - Face Attendance System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-dark sticky-top">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">
+                <i class="fas fa-face-smile"></i> Face Attendance System
+            </span>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="container my-5">
+        <div class="row justify-content-center mb-5">
+            <div class="col-12 text-center">
+                <h2>Train Face Recognition Model</h2>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Training Card -->
+            <div class="col-lg-8 mx-auto">
+                <div class="card shadow-sm">
+                    <div class="card-header" style="background: linear-gradient(90deg, #198754 0%, #20c997 100%) !important;">
+                        <h5 class="mb-0"><i class="fas fa-brain"></i> Model Training</h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Alert Messages -->
+                        <div id="alert-container"></div>
+
+                        <div class="alert alert-info" role="alert">
+                            <h6 class="alert-heading"><i class="fas fa-lightbulb"></i> Before Training</h6>
+                            <ul class="mb-0">
+                                <li>Make sure you have <strong>registered at least 1-2 students</strong></li>
+                                <li>Each student should have <strong>20-30 face images</strong></li>
+                                <li>Images must be clear and properly saved in `dataset/` folder</li>
+                                <li>Training may take <strong>1-5 minutes</strong> depending on data size</li>
+                                <li><strong>Do not close</strong> the application during training</li>
+                            </ul>
+                        </div>
+
+                        <!-- User Selection Section -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h6 class="mb-0"><i class="fas fa-users"></i> Select Students to Train</h6>
+                            </div>
+                            <div class="card-body">
+                                <div id="users-container" class="mb-3">
+                                    <div class="text-center text-muted py-4">
+                                        <i class="fas fa-spinner fa-spin"></i> Loading registered students...
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex gap-2 flex-wrap">
+                                    <button id="select-all-btn" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-check-double"></i> Select All
+                                    </button>
+                                    <button id="deselect-all-btn" class="btn btn-sm btn-outline-secondary">
+                                        <i class="fas fa-times"></i> Deselect All
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Progress Section (hidden until training starts) -->
+                        <div id="progress-section" class="card mb-4" style="display: none;">
+                            <div class="card-header">
+                                <h6 class="mb-0"><i class="fas fa-tasks"></i> Training Progress</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span id="progress-label">Preparing...</span>
+                                        <span id="progress-percent">0%</span>
+                                    </div>
+                                    <div class="progress" style="height: 25px;">
+                                        <div id="progress-bar" class="progress-bar progress-bar-striped progress-bar-animated" 
+                                             role="progressbar" style="width: 0%">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="progress-message" class="alert alert-info">
+                                    <i class="fas fa-info-circle"></i> Training in progress. Please wait...
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Training Tips -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <div class="info-card">
+                                    <h6 class="text-success"><i class="fas fa-check-circle"></i> Good Training Data</h6>
+                                    <ul class="small mb-0">
+                                        <li>Clear, well-lit images</li>
+                                        <li>Different angles & positions</li>
+                                        <li>Minimum 20 samples per student</li>
+                                        <li>No obstructed faces</li>
+                                        <li>Consistent image quality</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-card">
+                                    <h6 class="text-warning"><i class="fas fa-exclamation-triangle"></i> Avoid</h6>
+                                    <ul class="small mb-0">
+                                        <li>Blurry or dark images</li>
+                                        <li>Side profiles only</li>
+                                        <li>Sunglasses/hats</li>
+                                        <li>Very few samples per person</li>
+                                        <li>Mixed lighting conditions</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- What Gets Saved -->
+                        <div class="alert alert-success" role="alert">
+                            <h6 class="alert-heading"><i class="fas fa-save"></i> After Successful Training</h6>
+                            <ul class="mb-0">
+                                <li><strong>svm.pkl</strong> - Trained SVM classifier model</li>
+                                <li><strong>encoder.pkl</strong> - Label encoder for student names</li>
+                                <li>Models saved in <code>models/</code> directory</li>
+                                <li>You can now use <strong>Take Attendance</strong> feature</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <div class="d-grid gap-2">
+                            <button id="train-btn" type="button" class="btn btn-success btn-lg" disabled>
+                                <i class="fas fa-sync"></i> Start Training
+                            </button>
+                            <a href="/" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to Home
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FAQ Section -->
+        <div class="row mt-5">
+            <div class="col-12">
+                <div class="info-card">
+                    <h5><i class="fas fa-question-circle"></i> Frequently Asked Questions</h5>
+                    
+                    <div class="mt-4">
+                        <h6 class="text-primary">Q: How long does training take?</h6>
+                        <p>A: Training typically takes 1-3 minutes for 5-10 students. More data = longer training time.</p>
+                    </div>
+
+                    <div>
+                        <h6 class="text-primary">Q: What if training fails?</h6>
+                        <p>A: Check console for errors. Common issues: corrupted images, no registered students, or insufficient memory.</p>
+                    </div>
+
+                    <div>
+                        <h6 class="text-primary">Q: Can I retrain with new data?</h6>
+                        <p>A: Yes! Register new students and click Train again. Old models will be overwritten.</p>
+                    </div>
+
+                    <div>
+                        <h6 class="text-primary">Q: Can I train only selected students?</h6>
+                        <p>A: Yes! Select the students you want to train using the checkboxes above, then click "Start Training".</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="text-white text-center py-4 mt-5">
+        <p class="mb-0">&copy; 2026 Face Attendance System</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const trainBtn = document.getElementById('train-btn');
+        const selectAllBtn = document.getElementById('select-all-btn');
+        const deselectAllBtn = document.getElementById('deselect-all-btn');
+        const usersContainer = document.getElementById('users-container');
+        const alertContainer = document.getElementById('alert-container');
+        const progressSection = document.getElementById('progress-section');
+        const progressBar = document.getElementById('progress-bar');
+        const progressLabel = document.getElementById('progress-label');
+        const progressPercent = document.getElementById('progress-percent');
+        const progressMessage = document.getElementById('progress-message');
+
+        let allUsers = [];
+
+        // Load users on page load
+        async function loadUsers() {
+            try {
+                const resp = await fetch('/get_users');
+                const data = await resp.json();
+                
+                if (data.status === 'ok' && data.users.length > 0) {
+                    allUsers = data.users;
+                    renderUsers();
+                    trainBtn.disabled = true; // Enable after at least one selection
+                } else {
+                    usersContainer.innerHTML = `
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i> No registered students found. 
+                            <a href="/register">Register students first</a>.
+                        </div>
+                    `;
+                    trainBtn.disabled = true;
+                }
+            } catch (err) {
+                usersContainer.innerHTML = `<div class="alert alert-danger">Error loading users: ${err.message}</div>`;
+            }
+        }
+
+        function renderUsers() {
+            usersContainer.innerHTML = allUsers.map((user, idx) => `
+                <div class="form-check mb-2">
+                    <input 
+                        class="form-check-input user-checkbox" 
+                        type="checkbox" 
+                        id="user-${idx}" 
+                        data-user="${user.name}"
+                    >
+                    <label class="form-check-label" for="user-${idx}">
+                        <strong>${user.name}</strong> 
+                        <span class="badge bg-info">${user.image_count} images</span>
+                    </label>
+                </div>
+            `).join('');
+
+            // Add change listeners
+            document.querySelectorAll('.user-checkbox').forEach(cb => {
+                cb.addEventListener('change', updateTrainBtn);
+            });
+        }
+
+        function updateTrainBtn() {
+            const hasSelected = document.querySelectorAll('.user-checkbox:checked').length > 0;
+            trainBtn.disabled = !hasSelected;
+        }
+
+        selectAllBtn.addEventListener('click', () => {
+            document.querySelectorAll('.user-checkbox').forEach(cb => cb.checked = true);
+            updateTrainBtn();
+        });
+
+        deselectAllBtn.addEventListener('click', () => {
+            document.querySelectorAll('.user-checkbox').forEach(cb => cb.checked = false);
+            updateTrainBtn();
+        });
+
+        trainBtn.addEventListener('click', startTraining);
+
+        async function startTraining() {
+            const selectedUsers = Array.from(document.querySelectorAll('.user-checkbox:checked'))
+                .map(cb => cb.dataset.user);
+            
+            if (selectedUsers.length === 0) {
+                showAlert('Please select at least one student', 'warning');
+                return;
+            }
+
+            trainBtn.disabled = true;
+            progressSection.style.display = 'block';
+            progressBar.style.width = '0%';
+            progressPercent.textContent = '0%';
+            progressLabel.textContent = 'Starting training...';
+
+            try {
+                const resp = await fetch('/train_selected', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ users: selectedUsers })
+                });
+
+                const data = await resp.json();
+
+                if (resp.ok && data.status === 'ok') {
+                    // Simulate progress completion
+                    for (let i = 0; i <= 100; i += 10) {
+                        await new Promise(r => setTimeout(r, 100));
+                        progressBar.style.width = i + '%';
+                        progressPercent.textContent = i + '%';
+                    }
+                    
+                    progressBar.style.width = '100%';
+                    progressPercent.textContent = '100%';
+                    progressLabel.textContent = 'Training completed!';
+                    progressMessage.innerHTML = `
+                        <div class="alert alert-success mb-0">
+                            <i class="fas fa-check-circle"></i> ${data.message}
+                        </div>
+                    `;
+
+                    showAlert(data.message, 'success');
+                    
+                    // Reset after 2 seconds
+                    setTimeout(() => {
+                        progressSection.style.display = 'none';
+                        trainBtn.disabled = false;
+                    }, 2000);
+                } else {
+                    progressMessage.innerHTML = `
+                        <div class="alert alert-danger mb-0">
+                            <i class="fas fa-times-circle"></i> ${data.message}
+                        </div>
+                    `;
+                    showAlert(data.message || 'Training failed', 'danger');
+                    trainBtn.disabled = false;
+                }
+            } catch (err) {
+                progressMessage.innerHTML = `
+                    <div class="alert alert-danger mb-0">
+                        <i class="fas fa-times-circle"></i> Error: ${err.message}
+                    </div>
+                `;
+                showAlert('Training error: ' + err.message, 'danger');
+                trainBtn.disabled = false;
+            }
+        }
+
+        function showAlert(message, type) {
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type} alert-dismissible fade show`;
+            alert.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            alertContainer.innerHTML = '';
+            alertContainer.appendChild(alert);
+
+            // Auto-dismiss after 5 seconds
+            setTimeout(() => {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            }, 5000);
+        }
+
+        // Load users when page loads
+        window.addEventListener('DOMContentLoaded', loadUsers);
+    </script>
+
+    <style>
+        .info-card {
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #0d6efd;
+        }
+
+        .progress {
+            background-color: #e9ecef;
+        }
+
+        .progress-bar {
+            background: linear-gradient(90deg, #198754 0%, #20c997 100%);
+        }
+
+        .form-check-input:checked {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+        }
+
+        .badge {
+            font-size: 0.75rem;
+            margin-left: 5px;
+        }
+    </style>
+</body>
+</html>

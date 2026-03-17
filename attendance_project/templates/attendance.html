@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Take Attendance - Face Attendance System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-dark sticky-top">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">
+                <i class="fas fa-face-smile"></i> Face Attendance System
+            </span>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="container my-5">
+        <div class="row justify-content-center mb-5">
+            <div class="col-12 text-center">
+                <h2>Take Attendance</h2>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Instructions Card -->
+            <div class="col-lg-8 mx-auto">
+                <div class="card shadow-sm">
+                    <div class="card-header" style="background: linear-gradient(90deg, #dc3545 0%, #fd7e14 100%) !important;">
+                        <h5 class="mb-0"><i class="fas fa-camera"></i> Camera Instructions</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-warning" role="alert">
+                            <h6 class="alert-heading"><i class="fas fa-exclamation-triangle"></i> Important</h6>
+                            <ul class="mb-0">
+                                <li>Make sure the <strong>model is trained</strong> with student data</li>
+                                <li><strong>Position your face</strong> clearly in the camera frame</li>
+                                <li><strong>Good lighting</strong> is essential for accurate recognition</li>
+                                <li>The system will <strong>automatically mark</strong> recognized faces</li>
+                                <li>Press <strong>ESC</strong> on the keyboard to stop capturing</li>
+                            </ul>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <div class="info-card">
+                                    <h6 class="text-success">
+                                        <i class="fas fa-check-circle"></i> Do's
+                                    </h6>
+                                    <ul class="small">
+                                        <li>Face the camera directly</li>
+                                        <li>Keep face in center of frame</li>
+                                        <li>Use natural lighting</li>
+                                        <li>Keep eyes open & visible</li>
+                                        <li>Calm, neutral expression</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-card">
+                                    <h6 class="text-danger">
+                                        <i class="fas fa-times-circle"></i> Don'ts
+                                    </h6>
+                                    <ul class="small">
+                                        <li>Don't wear sunglasses</li>
+                                        <li>Don't cover face with hands</li>
+                                        <li>Avoid side profiles only</li>
+                                        <li>No extreme head tilts</li>
+                                        <li>Don't have blurry images</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <form method="POST" onsubmit="return confirmStart()">
+                            <button type="submit" class="btn btn-danger btn-lg w-100">
+                                <i class="fas fa-video"></i> Start Attendance Capture
+                            </button>
+                        </form>
+                        <a href="/" class="btn btn-secondary btn-sm mt-3 w-100">
+                            <i class="fas fa-arrow-left"></i> Back to Home
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- How it Works -->
+        <div class="row mt-5">
+            <div class="col-12">
+                <div class="info-card">
+                    <h5><i class="fas fa-gears"></i> How the System Works</h5>
+                    <div class="row text-center mt-4">
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <h4 class="text-primary">1</h4>
+                                <p><strong>Detect Face</strong><br>
+                                <small>Camera detects faces in real-time</small></p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <h4 class="text-success">2</h4>
+                                <p><strong>Extract Features</strong><br>
+                                <small>Creates facial embeddings</small></p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <h4 class="text-info">3</h4>
+                                <p><strong>Compare</strong><br>
+                                <small>Matches with trained model</small></p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <h4 class="text-warning">4</h4>
+                                <p><strong>Record</strong><br>
+                                <small>Saves to database</small></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="text-white text-center py-4 mt-5">
+        <p class="mb-0">&copy; 2026 Face Attendance System</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function confirmStart() {
+            return confirm('Start attendance capture? Make sure:\n- Model is trained\n- Camera is connected\n- Good lighting available\n- Your face is visible');
+        }
+    </script>
+</body>
+</html>

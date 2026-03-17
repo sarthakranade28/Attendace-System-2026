@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register Student - Face Attendance System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-dark sticky-top">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">
+                <i class="fas fa-face-smile"></i> Face Attendance System
+            </span>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="container my-5">
+        <!-- Alerts -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else 'success' if category == 'success' else 'info' }} alert-dismissible fade show" role="alert">
+                        <i class="fas fa-{{ 'times-circle' if category == 'error' else 'check-circle' if category == 'success' else 'info-circle' }}"></i>
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="row justify-content-center mb-5">
+            <div class="col-12">
+                <h2 class="text-center">Register New Student</h2>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Registration Options -->
+            <div class="col-lg-8 mx-auto">
+                <!-- Tabs for different input methods -->
+                <ul class="nav nav-pills mb-4 justify-content-center" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="webcam-tab" data-bs-toggle="tab" data-bs-target="#webcam-content" type="button" role="tab">
+                            <i class="fas fa-camera"></i> Webcam Capture
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="upload-tab" data-bs-toggle="tab" data-bs-target="#upload-content" type="button" role="tab">
+                            <i class="fas fa-image"></i> Upload Images
+                        </button>
+                    </li>
+                </ul>
+
+                <!-- Tab Contents -->
+                <div class="tab-content">
+                    <!-- Webcam Capture Tab -->
+                    <div class="tab-pane fade show active" id="webcam-content" role="tabpanel">
+                        <div class="card shadow-sm">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-camera"></i> Webcam Face Capture</h5>
+                            </div>
+                            <div class="card-body">
+                                <form id="webcam-form" onsubmit="return false;">
+                                    <div class="form-group mb-4">
+                                        <label for="webcam-name" class="form-label">
+                                            <i class="fas fa-id-card"></i> Full Name
+                                        </label>
+                                        <input 
+                                            type="text" 
+                                            class="form-control" 
+                                            id="webcam-name" 
+                                            name="name" 
+                                            placeholder="Enter student's full name"
+                                            required
+                                            autocomplete="off"
+                                        >
+                                        <small class="form-text text-muted">
+                                            <i class="fas fa-info-circle"></i> Use first and last name
+                                        </small>
+                                    </div>
+
+                                    <div class="alert alert-info" role="alert">
+                                        <h6 class="alert-heading">
+                                            <i class="fas fa-lightbulb"></i> Webcam Instructions
+                                        </h6>
+                                        <ul class="mb-0">
+                                            <li>System will capture <strong>30 face images</strong> automatically</li>
+                                            <li>Position your face clearly in front of the camera</li>
+                                            <li>Ensure good lighting (natural light is best)</li>
+                                            <li>Try different angles and expressions</li>
+                                            <li>Press <strong>ESC</strong> key to stop early (if using terminal)</li>
+                                            <li>System automatically saves high-confidence images</li>
+                                        </ul>
+                                    </div>
+
+                                    <button id="start-webcam" type="button" class="btn btn-primary btn-lg w-100">
+                                        <i class="fas fa-video"></i> Start Webcam Capture
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Upload Images Tab -->
+                    <div class="tab-pane fade" id="upload-content" role="tabpanel">
+                        <div class="card shadow-sm">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-cloud-upload-alt"></i> Upload Face Images</h5>
+                            </div>
+                            <div class="card-body">
+                                <form method="POST" enctype="multipart/form-data" onsubmit="return validateUpload()">
+                                    <div class="form-group mb-4">
+                                        <label for="upload-name" class="form-label">
+                                            <i class="fas fa-id-card"></i> Full Name
+                                        </label>
+                                        <input 
+                                            type="text" 
+                                            class="form-control" 
+                                            id="upload-name" 
+                                            name="name" 
+                                            placeholder="Enter student's full name"
+                                            required
+                                            autocomplete="off"
+                                        >
+                                    </div>
+
+                                    <div class="form-group mb-4">
+                                        <label for="images" class="form-label">
+                                            <i class="fas fa-images"></i> Select Images
+                                        </label>
+                                        <div class="upload-area" id="uploadArea">
+                                            <input 
+                                                type="file" 
+                                                class="form-control d-none" 
+                                                id="images" 
+                                                name="images" 
+                                                multiple
+                                                accept="image/*"
+                                                required
+                                            >
+                                            <div class="text-center py-5">
+                                                <i class="fas fa-cloud-upload-alt fa-3x text-primary mb-3"></i>
+                                                <p><strong>Drag and drop images here</strong></p>
+                                                <p class="text-muted">or click to browse</p>
+                                                <small class="d-block mt-2" id="fileCount">No files selected</small>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="alert alert-warning" role="alert">
+                                        <h6 class="alert-heading">
+                                            <i class="fas fa-exclamation-triangle"></i> Upload Tips
+                                        </h6>
+                                        <ul class="mb-0">
+                                            <li>Upload <strong>20-30 clear face images</strong></li>
+                                            <li>Supported formats: JPG, PNG, GIF</li>
+                                            <li>Each image should show the face clearly</li>
+                                            <li>Vary angles, lighting, and expressions</li>
+                                            <li>No sunglasses, hats, or obstructions</li>
+                                            <li>Maximum 50MB total size</li>
+                                        </ul>
+                                    </div>
+
+                                    <button type="submit" class="btn btn-success btn-lg w-100">
+                                        <i class="fas fa-upload"></i> Upload Images
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Info Card -->
+            <div class="col-lg-4">
+                <div class="card shadow-sm">
+                    <div class="card-header" style="background: linear-gradient(90deg, #198754 0%, #20c997 100%) !important;">
+                        <h5 class="mb-0"><i class="fas fa-lightbulb"></i> Best Practices</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-4">
+                            <h6 class="text-success"><i class="fas fa-check-circle"></i> For Better Recognition</h6>
+                            <ul class="list-unstyled small">
+                                <li class="mb-2">✓ Clear front-facing photos</li>
+                                <li class="mb-2">✓ Good natural or bright lighting</li>
+                                <li class="mb-2">✓ Eyes must be visible and open</li>
+                                <li class="mb-2">✓ Hair should not cover face</li>
+                                <li class="mb-2">✓ Natural facial expressions</li>
+                                <li class="mb-2">✓ Various angles (10-20 degrees)</li>
+                            </ul>
+                        </div>
+
+                        <div>
+                            <h6 class="text-danger"><i class="fas fa-times-circle"></i> Avoid</h6>
+                            <ul class="list-unstyled small">
+                                <li class="mb-2">✗ Sunglasses or dark glasses</li>
+                                <li class="mb-2">✗ Hats or head covers</li>
+                                <li class="mb-2">✗ Low lighting or shadows</li>
+                                <li class="mb-2">✗ Side profiles only</li>
+                                <li class="mb-2">✗ Blurry or out-of-focus</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Already registered? -->
+        <div class="row mt-5">
+            <div class="col-12 text-center">
+                <a href="/" class="btn btn-secondary btn-lg">
+                    <i class="fas fa-arrow-left"></i> Back to Home
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="text-white text-center py-4 mt-5">
+        <p class="mb-0">&copy; 2026 Face Attendance System</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Webcam capture script -->
+    <script>
+        let stream = null;
+        let mediaRecorder = null;
+        let capturedBlobs = [];
+
+        const startBtn = document.getElementById('start-webcam');
+
+        async function openCameraAndCapture() {
+            const nameInput = document.getElementById('webcam-name');
+            const name = nameInput.value.trim();
+            if (!name || name.length < 2 || !/^[a-zA-Z\s]+$/.test(name)) {
+                alert('Please enter a valid name (letters and spaces only) before starting the camera');
+                return;
+            }
+
+            // Create modal elements
+            const modalHtml = `
+            <div class="modal fade" id="camModal" tabindex="-1">
+              <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title">Capture Faces for ${name}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                  </div>
+                                    <div class="modal-body text-center">
+                                        <video id="camVideo" autoplay playsinline style="max-width:100%; border-radius:8px;"></video>
+                                        <div class="mt-3">
+                                            <div class="progress" style="height:18px;"><div id="capProgress" class="progress-bar" role="progressbar" style="width:0%">0%</div></div>
+                                            <small class="text-muted">Capturing 30 frames automatically. You can stop early.</small>
+                                        </div>
+                                        <div id="camAlert" class="mt-3"></div>
+                                    </div>
+                  <div class="modal-footer">
+                    <button id="stopCapture" type="button" class="btn btn-danger">Stop</button>
+                    <button id="saveCapture" type="button" class="btn btn-success">Save & Upload</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            `;
+
+            // Insert modal into DOM
+            const wrapper = document.createElement('div');
+            wrapper.innerHTML = modalHtml;
+            document.body.appendChild(wrapper);
+
+            const camModalEl = document.getElementById('camModal');
+            const camModal = new bootstrap.Modal(camModalEl, {backdrop: 'static', keyboard: false});
+            const video = document.getElementById('camVideo');
+            const capProgress = document.getElementById('capProgress');
+            const stopBtn = document.getElementById('stopCapture');
+            const saveBtn = document.getElementById('saveCapture');
+
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 }, audio: false });
+                video.srcObject = stream;
+            } catch (err) {
+                const camAlertElem = camModalEl.querySelector('#camAlert');
+                if (camAlertElem) camAlertElem.innerHTML = `<div class="alert alert-danger">Could not access camera: ${err.message}</div>`;
+                wrapper.remove();
+                return;
+            }
+
+            capturedBlobs = [];
+            let capturesTarget = 30;
+            let capturedCount = 0;
+
+            // Capture frames at intervals
+            const captureInterval = 200; // ms
+            const canvas = document.createElement('canvas');
+            canvas.width = 160; canvas.height = 160;
+            const ctx = canvas.getContext('2d');
+
+            const timer = setInterval(() => {
+                if (!video || video.readyState < 2) return;
+                ctx.drawImage(video, (video.videoWidth - canvas.width)/2, (video.videoHeight - canvas.height)/2, canvas.width, canvas.height, 0, 0, canvas.width, canvas.height);
+                canvas.toBlob((blob) => {
+                    if (blob) {
+                        capturedBlobs.push(blob);
+                        capturedCount++;
+                        const pct = Math.round((capturedCount / capturesTarget) * 100);
+                        capProgress.style.width = pct + '%';
+                        capProgress.textContent = pct + '%';
+                    }
+                }, 'image/jpeg', 0.9);
+
+                if (capturedCount >= capturesTarget) {
+                    clearInterval(timer);
+                }
+            }, captureInterval);
+
+            stopBtn.addEventListener('click', () => {
+                clearInterval(timer);
+                capProgress.classList.add('bg-warning');
+                const camAlertElem = camModalEl.querySelector('#camAlert');
+                if (camAlertElem) camAlertElem.innerHTML = `<div class="alert alert-warning">Capture stopped by user. You may save the captured images or try again.</div>`;
+            });
+
+            saveBtn.addEventListener('click', async () => {
+                clearInterval(timer);
+                if (!capturedBlobs.length) {
+                    alert('No frames captured');
+                    return;
+                }
+
+                const form = new FormData();
+                form.append('name', name);
+                capturedBlobs.forEach((b, i) => form.append('images[]', b, `frame_${i}.jpg`));
+
+                // POST to server
+                try {
+                    saveBtn.disabled = true;
+                    saveBtn.textContent = 'Uploading...';
+                    const resp = await fetch('/register_webcam', { method: 'POST', body: form });
+                    const data = await resp.json();
+                    const camAlertElem = camModalEl.querySelector('#camAlert');
+                    if (resp.ok && data.status === 'ok') {
+                        if (camAlertElem) camAlertElem.innerHTML = `<div class="alert alert-success">${data.message}</div>`;
+                        setTimeout(() => {
+                            camModal.hide();
+                            window.location.reload();
+                        }, 800);
+                    } else {
+                        if (camAlertElem) camAlertElem.innerHTML = `<div class="alert alert-danger">Upload failed: ${data.message || resp.statusText}</div>`;
+                        saveBtn.disabled = false;
+                        saveBtn.textContent = 'Save & Upload';
+                    }
+                } catch (err) {
+                    const camAlertElem = camModalEl.querySelector('#camAlert');
+                    if (camAlertElem) camAlertElem.innerHTML = `<div class="alert alert-danger">Upload error: ${err.message}</div>`;
+                    saveBtn.disabled = false;
+                    saveBtn.textContent = 'Save & Upload';
+                }
+            });
+
+            camModal.show();
+
+            // Clean up on modal hide
+            camModalEl.addEventListener('hidden.bs.modal', () => {
+                if (stream) {
+                    stream.getTracks().forEach(t => t.stop());
+                    stream = null;
+                }
+                wrapper.remove();
+            });
+        }
+
+        if (startBtn) startBtn.addEventListener('click', openCameraAndCapture);
+    </script>
+    <script>
+        // Validate name
+        function validateName(inputId) {
+            const name = document.getElementById(inputId).value.trim();
+            if (name.length < 2) {
+                alert('Please enter a valid name (at least 2 characters)');
+                return false;
+            }
+            
+            if (!/^[a-zA-Z\s]+$/.test(name)) {
+                alert('Name should only contain letters and spaces');
+                return false;
+            }
+
+            return confirm(`Start webcam capture for ${name}? Make sure:\n✓ Camera is connected\n✓ Good lighting available\n✓ Your face is visible`);
+        }
+
+        // File upload handling
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('images');
+        const fileCount = document.getElementById('fileCount');
+
+        if (uploadArea) {
+            uploadArea.addEventListener('click', () => fileInput.click());
+
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.style.backgroundColor = '#e3f2fd';
+            });
+
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.style.backgroundColor = 'transparent';
+            });
+
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                fileInput.files = e.dataTransfer.files;
+                updateFileCount();
+                uploadArea.style.backgroundColor = 'transparent';
+            });
+
+            fileInput.addEventListener('change', updateFileCount);
+        }
+
+        function updateFileCount() {
+            const count = fileInput.files.length;
+            fileCount.textContent = count + (count === 1 ? ' file selected' : ' files selected');
+        }
+
+        function validateUpload() {
+            const name = document.getElementById('upload-name').value.trim();
+            const files = document.getElementById('images').files;
+
+            if (name.length < 2) {
+                alert('Please enter a valid name');
+                return false;
+            }
+
+            if (files.length === 0) {
+                alert('Please select at least one image');
+                return false;
+            }
+
+            if (files.length < 5) {
+                alert('It\'s recommended to upload at least 5 images for better accuracy');
+                return confirm('Continue with ' + files.length + ' image(s)?');
+            }
+
+            return true;
+        }
+
+        // Auto-dismiss alerts
+        document.addEventListener('DOMContentLoaded', function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                setTimeout(() => {
+                    const bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                }, 5000);
+            });
+        });
+    </script>
+
+    <style>
+        .upload-area {
+            border: 2px dashed #0d6efd;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .upload-area:hover {
+            border-color: #0dcaf0;
+            background-color: #f0f8ff;
+        }
+
+        .nav-link {
+            color: #666;
+            border-radius: 8px;
+        }
+
+        .nav-link.active {
+            background: linear-gradient(90deg, #0d6efd 0%, #0dcaf0 100%);
+        }
+    </style>
+</body>
+</html>
